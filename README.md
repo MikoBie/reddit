@@ -1,13 +1,13 @@
 # `Reddit 101`: A short tutorial on how to scrape data from Reddit
 
-This is a very basic tutorial on scraping data from Reddit. Although it is written in _python_ it does not require knowing it very well. The tutorial was created for people who will run the interactive notebooks in `Google Colab` but obviously it is possible to run it in `Jupyter Notebook`. However, the latter requires being a more advanced user who knows how to install packages on their local machine. 
+This is a very basic tutorial on scraping data from [Reddit](reddit.com). Although it is written in _python_ it does not require knowing it very well. The tutorial was created for people who will run the interactive notebooks in `Google Colab` but obviously it is possible to use it in `Jupyter Notebook`. However, the latter requires being a more advanced user who knows how to install packages on their local machine. 
 
 ## Google Colab
 
 Users who want to use the tutorial online in `Google Colab` should follow these steps to access these interactive notebooks:
 
-1. Go to [www.colab.research.google.com](https://colab.research.google.com/) (it is better to have a Google Account but not necessary)
-2. Press GitHub in the popup window
+1. Go to [www.colab.research.google.com](https://colab.research.google.com/) (it is better to have a Google Account but not necessary).
+2. Press GitHub in the popup window or press File and Open notebook.
 3. Type `MikoBie` in the search box (compare the picture below).
 ![github](png/github.png)
 4. Choose `reddit-0.ipynb` and click Open Notebook.
