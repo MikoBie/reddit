@@ -1,5 +1,5 @@
 ## Load modules
-import request as rq
+import requests as rq
 import json
 import time
 import sys
@@ -37,6 +37,8 @@ def collect_data(source_url, payload):
     payload: 
         A mapping with parameters passed to the Pushshift API.
     """
+    if 'after' not in payload:
+        payload['after'] = '2005-06-23 00:00:00'
     response = rq.get(source_url, params = payload)
     if response.status_code == 200:
         return json.loads(response.text)['data']
@@ -87,7 +89,13 @@ with open('comments.jl', 'w') as file:
             ## Print out the strange status code and its message
             print(f'Something went wrong. The status code error was {data.pop}.')
 
+## Define the parameters and options
 source_url = 'https://api.pushshift.io/reddit/search/submission/'
+payload = { 'subreddit' : 'climate',
+            'size' : 100}
+
+## Collect first batch of data
+data = collect_data(source_url = source_url, payload = payload)
 with open('submissions.jl', 'w') as file:
     ## Write out the data you already collected
     for line in data:
