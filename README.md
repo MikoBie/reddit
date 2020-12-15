@@ -24,7 +24,7 @@ For more advanced users I recommend running this tutorial on their local machine
 
 ### Setup
 
-1. Clone the repo: [git@github.com:MikoBie/ranTool.git](git@github.com:MikoBie/reddit.git)
+1. Clone the repo: [git@github.com:MikoBie/reddit.git](git@github.com:MikoBie/reddit.git)
 2. Set up the proper virtual environment with python3.7
 3. Install all the dependencies from `requirenments.txt`
 
