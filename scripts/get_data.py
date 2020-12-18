@@ -38,7 +38,7 @@ def collect_data(source_url, payload):
         A mapping with parameters passed to the Pushshift API.
     """
     if 'after' not in payload:
-        payload['after'] = '2005-06-23 00:00:00'
+        payload['after'] = parse_date('2005-06-23 00:00:00')
     response = rq.get(source_url, params = payload)
     if response.status_code == 200:
         return json.loads(response.text)['data']
@@ -59,35 +59,35 @@ payload = { 'subreddit' : 'climate',
             'size' : 100}
 
 ## Collect first batch of data
-data = collect_data(source_url = source_url, payload = payload)
+data_comments = collect_data(source_url = source_url, payload = payload)
 
-## Collect and store the rest of the data
+## Open a file in write mode
 with open('comments.jl', 'w') as file:
     ## Write out the data you already collected
-    for line in data:
+    for line in data_comments:
         line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
         file.write(json.dumps(line) + '\n')
     ## Set the prpogress bar
-    pbar = tqdm.tqdm(position=0, leave=True)
+    pbar = tqdm.tqdm(position=0, leave=True,initial=100)
     ## Create a while-loop
-    while len(data) > 0:
+    while len(data_comments) > 0:
         ## Check if we got data from Reddit or a strange status code
-        if len(data[0].keys()) > 2:
+        if len(data_comments[0].keys()) > 2:
             ## Get the last collected data date in epoch time
-            after = parse_date(data[-1]['created_utc'])
+            after = parse_date(data_comments[-1]['created_utc'])
             ## Update the payload after field
             payload['after'] = after
             ## Collect the data
-            data = collect_data(source_url = source_url, payload = payload)
-            ## WRite out the collected data to the file
-            for line in data:
+            data_comments = collect_data(source_url = source_url, payload = payload)
+            ## Write out the collected data to the file
+            for line in data_comments:
                 line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
                 file.write(json.dumps(line) + '\n')
             ## Update the progress bar
-            pbar.update(len(data))
+            pbar.update(len(data_comments))
         else:
             ## Print out the strange status code and its message
-            print(f'Something went wrong. The status code error was {data.pop}.')
+            print(f'Something went wrong. The status code error was {data_comments.pop}.')
 
 ## Define the parameters and options
 source_url = 'https://api.pushshift.io/reddit/search/submission/'
@@ -96,13 +96,15 @@ payload = { 'subreddit' : 'climate',
 
 ## Collect first batch of data
 data = collect_data(source_url = source_url, payload = payload)
+
+## Open a file in write mode
 with open('submissions.jl', 'w') as file:
     ## Write out the data you already collected
     for line in data:
         line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
         file.write(json.dumps(line) + '\n')
     ## Set the prpogress bar
-    pbar = tqdm.tqdm(position=0, leave=True)
+    pbar = tqdm.tqdm(position=0, leave=True, initial=100)
     ## Create a while-loop
     while len(data) > 0:
         ## Check if we got data from Reddit or a strange status code
@@ -113,7 +115,7 @@ with open('submissions.jl', 'w') as file:
             payload['after'] = after
             ## Collect the data
             data = collect_data(source_url = source_url, payload = payload)
-            ## WRite out the collected data to the file
+            ## Write out the collected data to the file
             for line in data:
                 line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
                 file.write(json.dumps(line) + '\n')
