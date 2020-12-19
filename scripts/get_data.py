@@ -4,6 +4,10 @@ import json
 import time
 import sys
 import tqdm
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+nltk.download('vader_lexicon')
+vader = SentimentIntensityAnalyzer()
 
 ## Define custom functions which will make our life easier
 
@@ -81,8 +85,15 @@ with open('comments.jl', 'w') as file:
             data_comments = collect_data(source_url = source_url, payload = payload)
             ## Write out the collected data to the file
             for line in data_comments:
-                line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
-                file.write(json.dumps(line) + '\n')
+                if 'created_utc' in line:
+                    ## Compute sentiment of the text
+                    temp = vader.polarity_scores(line['body'])
+                    line['pos'] = temp['pos']
+                    line['neg'] = temp['neg']
+                    line['neu'] = temp['neu']
+                    line['compound'] = temp['compound']
+                    line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
+                    file.write(json.dumps(line) + '\n')
             ## Update the progress bar
             pbar.update(len(data_comments))
         else:
@@ -117,8 +128,21 @@ with open('submissions.jl', 'w') as file:
             data = collect_data(source_url = source_url, payload = payload)
             ## Write out the collected data to the file
             for line in data:
-                line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
-                file.write(json.dumps(line) + '\n')
+                if 'created_utc' in line:
+                    ## Compute sentiment of the text
+                    temp = vader.polarity_scores(line['title'])
+                    line['pos'] = temp['pos']
+                    line['neg'] = temp['neg']
+                    line['neu'] = temp['neu']
+                    line['compound'] = temp['compound']
+                    if 'selftext' in line and len(line['selftext']) > 0 and '[deleted]' not in line['selftext']:
+                        temp = vader.polarity_scores(line['selftext'])
+                        line['pos_selftext'] = temp['pos']
+                        line['neg_selftext'] = temp['neg']
+                        line['neu_selftext'] = temp['neu']
+                        line['compound_selftext'] = temp['compound']
+                    line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
+                    file.write(json.dumps(line) + '\n')
             ## Update the progress bar
             pbar.update(len(data))
         else:
