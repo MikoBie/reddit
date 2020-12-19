@@ -46,7 +46,6 @@ def collect_data(source_url, payload):
     response = rq.get(source_url, params = payload)
     if response.status_code == 200:
         return json.loads(response.text)['data']
-        time.sleep(1)
     elif response.status_code == 429 or response.status_code == 523 or response.status_code == 502:
         for i in range(60,0,-1):
             sys.stdout.write(f'The compulasatory break finishes in {str(i)} seconds\r')
@@ -59,7 +58,7 @@ def collect_data(source_url, payload):
 
 ## Define the parameters and options
 source_url = 'https://api.pushshift.io/reddit/search/comment/'
-payload = { 'subreddit' : 'climate',
+payload = { 'subreddit' : 'urbanplanning',
             'size' : 100}
 
 ## Collect first batch of data
@@ -69,6 +68,11 @@ data_comments = collect_data(source_url = source_url, payload = payload)
 with open('comments.jl', 'w') as file:
     ## Write out the data you already collected
     for line in data_comments:
+        temp = vader.polarity_scores(line['body'])
+        line['pos'] = temp['pos']
+        line['neg'] = temp['neg']
+        line['neu'] = temp['neu']
+        line['compound'] = temp['compound']
         line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
         file.write(json.dumps(line) + '\n')
     ## Set the prpogress bar
@@ -102,7 +106,7 @@ with open('comments.jl', 'w') as file:
 
 ## Define the parameters and options
 source_url = 'https://api.pushshift.io/reddit/search/submission/'
-payload = { 'subreddit' : 'climate',
+payload = { 'subreddit' : 'urbanplanning',
             'size' : 100}
 
 ## Collect first batch of data
@@ -112,6 +116,17 @@ data = collect_data(source_url = source_url, payload = payload)
 with open('submissions.jl', 'w') as file:
     ## Write out the data you already collected
     for line in data:
+        temp = vader.polarity_scores(line['title'])
+        line['pos'] = temp['pos']
+        line['neg'] = temp['neg']
+        line['neu'] = temp['neu']
+        line['compound'] = temp['compound']
+        if 'selftext' in line and len(line['selftext']) > 0 and '[deleted]' not in line['selftext']:
+            temp = vader.polarity_scores(line['selftext'])
+            line['pos_selftext'] = temp['pos']
+            line['neg_selftext'] = temp['neg']
+            line['neu_selftext'] = temp['neu']
+            line['compound_selftext'] = temp['compound']
         line['created_utc'] = parse_date(line['created_utc'], format = 'epoch')
         file.write(json.dumps(line) + '\n')
     ## Set the prpogress bar
