@@ -396,3 +396,9 @@ TSWLatexianTemp*
 
 # data
 **/*.jl
+
+# R
+*.Rproj
+
+# homework
+homework/
