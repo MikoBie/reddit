@@ -10,21 +10,22 @@ Users who want to use the tutorial online in `Google Colab` should follow these 
 2. Press GitHub in the popup window or press File and Open notebook.
 3. Type `MikoBie` in the search box (compare the picture below).
 ![github](png/github.png)
-4. Choose a relevent notebook and click Open Notebook.
+4. Pick the relevant repository: `reddit`
+4. Choose the relevant notebook and click Open Notebook.
 
 That is it, an interactive notebook should open.
 
 ## Jupyter Notebook
 
-For more advanced users I recommend running this tutorial on their local machines. In a long shot, it will allow scraping more data because even though downloading a lot of data through `Jupyter Notebook` is an ill idea at least the environment for more advanced queries would be already created.
+For more advanced users I recommend running this tutorial on their local machines. In the long shot, it will allow scraping more data because even though downloading a lot of data through `Jupyter Notebook` is an ill idea at least the environment for more advanced queries would be already created.
 ### Main Dependencies
 
-* python3.7 ([anaconda distribution](https://www.anaconda.com/download/) is preferred)
+* python3.9 ([anaconda distribution](https://www.anaconda.com/download/) is preferred)
 * other _python_ dependencies are specified in `requirenments.txt`
 
 ### Setup
 
-1. Clone the repo: [git@github.com:MikoBie/reddit.git](git@github.com:MikoBie/reddit.git)
-2. Set up the proper virtual environment with python3.7
+1. Clone the repo: [git@github.com:MikoBie/wgi.git](git@github.com:MikoBie/wgi.git)
+2. Set up the proper virtual environment with python3.9
 3. Install all the dependencies from `requirenments.txt`
 
