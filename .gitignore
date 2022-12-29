@@ -396,9 +396,17 @@ TSWLatexianTemp*
 
 # data
 **/*.jl
+**/*.xlsx
+**/*csv
 
 # R
 *.Rproj
 
 # homework
 homework/
+
+# models
+**/models
+
+# png
+**/png
