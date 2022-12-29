@@ -397,7 +397,8 @@ TSWLatexianTemp*
 # data
 **/*.jl
 **/*.xlsx
-**/*csv
+**/*.csv
+**/*.zip
 
 # R
 *.Rproj
