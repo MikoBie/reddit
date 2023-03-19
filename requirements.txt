@@ -81,7 +81,6 @@ pickleshare==0.7.5
 Pillow==9.3.0
 pip==22.3.1
 pipreqs==0.4.11
-pl-core-news-sm==3.4.0
 platformdirs==2.6.0
 praw==7.6.1
 prawcore==2.3.0
@@ -89,7 +88,6 @@ preshed==3.0.8
 prometheus-client==0.15.0
 prompt-toolkit==3.0.20
 psutil==5.9.0
-pt-core-news-lg==3.4.0
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.21
