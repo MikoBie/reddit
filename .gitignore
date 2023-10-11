@@ -396,6 +396,7 @@ TSWLatexianTemp*
 
 # data
 **/*.jl
+**/*.jsonl
 **/*.xlsx
 **/*.csv
 **/*.zip
