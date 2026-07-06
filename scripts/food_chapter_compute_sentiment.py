@@ -89,7 +89,7 @@ def compute_sentiment(text: str, country: str, sentiment_pipeline) -> list:
 
 # %%
 def main():
-    with open(PROC / "food_sentiment.jsonl", "w") as file:
+    with open(PROC / "food_texts_sentiment.jsonl", "w") as file:
         for _, item in tqdm(data.iterrows()):
             if item["country"] == "poland":
                 result = compute_sentiment(
