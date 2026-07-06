@@ -1,0 +1,13 @@
+name: reddit
+channels:
+  - defaults
+dependencies:
+  - python=3.14.6
+  - pip:
+    - pandas==3.0.3
+    - praw==8.0.2
+    - matplotlib==3.11.0
+    - pre-commit==4.6.0
+    - ruff==0.15.20
+    - ipykernel==7.3.0
+    - openpyxl==3.1.5
