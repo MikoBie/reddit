@@ -8,6 +8,7 @@ from hashlib import blake2b
 ROOT = Path(__file__).parent.parent
 DATA = ROOT / "data"
 XLSX = DATA / "xlsx"
+PROC = DATA / "processed"
 
 column_poland = {
     "Unnamed: 1": "body",
@@ -39,6 +40,7 @@ selected_columns = [
     "opp_social",
     "mot_refl",
     "mot_auto",
+    "country",
 ]
 # %%
 ## POLAND
@@ -155,5 +157,5 @@ columns_to_map = data.filter(regex=rgx).columns.tolist()
 
 data[columns_to_map] = data.loc[:, columns_to_map].map(lambda x: 0 if x == 0 else x / x)
 
-data[["id"] + selected_columns].to_csv(DATA / "food_texts.csv", index=False)
+data[["id"] + selected_columns].to_csv(PROC / "food_texts.csv", index=False)
 # %%
