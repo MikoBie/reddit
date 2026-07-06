@@ -1,8 +1,10 @@
 # %%
 import pandas as pd
 from pathlib import Path
+from hashlib import blake2b
 
 # %%
+## Global variables
 ROOT = Path(__file__).parent.parent
 DATA = ROOT / "data"
 XLSX = DATA / "xlsx"
@@ -27,23 +29,42 @@ column_uk = {
     "Comment": "body",
 }
 
+rgx = r"^cap_|^opp_|^mot_"
 
+selected_columns = [
+    "body",
+    "cap_psychological",
+    "cap_physical",
+    "opp_physical",
+    "opp_social",
+    "mot_refl",
+    "mot_auto",
+]
 # %%
-## Load the data
+## POLAND
 poland = pd.read_excel(XLSX / "Reddit_Poland.xlsx", index_col=0).rename(
     columns=column_poland
 )
-poland.loc[:, "cap_psychological":"mot_auto"] = (
+
+columns_to_map = poland.filter(regex=rgx).columns.tolist()
+
+poland[columns_to_map] = (
     poland.loc[:, "cap_psychological":"mot_auto"]
     .map(lambda x: 1 if not pd.isna(x) else 0)
     .fillna(0)
-    .filter(regex=r"body|^cap_|^opp_|^mot_")
+    .filter(regex=rgx)
 )
+
+# %%
+## PORTUGAL
 portugal = pd.read_excel(XLSX / "Reddit_Portugal.xlsx", index_col=0)
-portugal.loc[:, "En_Motiv_Refle_Moral (animals)":"Bar_Oppor_accesability"] = (
-    portugal.loc[:, "En_Motiv_Refle_Moral (animals)":"Bar_Oppor_accesability"]
-    .map(lambda x: 1 if not pd.isna(x) else 0)
-    .fillna(0)
+
+columns_to_map = portugal.loc[
+    :, "En_Motiv_Refle_Moral (animals)":"Bar_Oppor_accesability"
+].columns.tolist()
+
+portugal[columns_to_map] = (
+    portugal.loc[:, columns_to_map].map(lambda x: 1 if not pd.isna(x) else 0).fillna(0)
 )
 portugal = portugal.assign(
     cap_psychological=lambda x: x["Bar_Cap_knowledge about vege cuisine"],
@@ -59,8 +80,16 @@ portugal = portugal.assign(
     + x["Bar_Mot_Ref_health"],
     mot_refl_disonance=lambda x: x["En_Motiv_Ref_Reduction of cognitive disonance"],
 ).filter(regex=r"body|^cap_|^opp_|^mot_")
+
+# %%
+## UK
 uk = pd.read_excel(XLSX / "Reddit_UK.xlsx", index_col=0).rename(columns=column_uk)
-uk.loc[:, "Cap_Physical_Bar_Lack of Time":"Mot_Aut_Bar_Personal Preference"] = (
+
+columns_to_map = uk.loc[
+    :, "Cap_Physical_Bar_Lack of Time":"Mot_Aut_Bar_Personal Preference"
+].columns.tolist()
+
+uk[columns_to_map] = (
     uk.loc[:, "Cap_Physical_Bar_Lack of Time":"Mot_Aut_Bar_Personal Preference"]
     .map(lambda x: 1 if not pd.isna(x) else 0)
     .fillna(0)
@@ -87,13 +116,44 @@ uk = uk.assign(
     mot_auto=lambda x: x["Mot_Aut_Ena_Personal Preference"]
     + x["Mot_Aut_Bar_Personal Preference"],
 ).filter(regex=r"body|^cap_|^opp_|^mot_")
-# %%
-portugal_texts = portugal.sample(100, random_state=8710).loc[:, "body"].to_list()
-uk_texts = uk.sample(100, random_state=8710).loc[:, "body"].to_list()
-poland_texts = poland.sample(100, random_state=8710).loc[:, "body"].to_list()
-# %%
-pd.DataFrame(
-    {"poland": poland_texts, "portugal": portugal_texts, "uk": uk_texts}
-).to_csv(DATA / "food_texts.csv", index=False)
 
+# %%
+## Compute macro categories
+poland = poland.assign(
+    mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
+    opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
+    opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
+    country="poland",
+).filter(items=selected_columns)
+portugal = portugal.assign(
+    mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
+    opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
+    opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
+    country="portugal",
+).filter(items=selected_columns)
+
+uk = uk.assign(
+    mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
+    opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
+    opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
+    country="uk",
+).filter(items=selected_columns)
+
+# %%
+## Concatenate all dataframes and create unique id for each text
+data = (
+    pd.concat([poland, portugal, uk], axis=0)
+    .reset_index(drop=True)
+    .assign(
+        id=lambda x: x["body"].apply(
+            lambda y: blake2b(y.encode("utf-8"), digest_size=5).hexdigest()
+        )
+    )
+)
+
+columns_to_map = data.filter(regex=rgx).columns.tolist()
+
+data[columns_to_map] = data.loc[:, columns_to_map].map(lambda x: 0 if x == 0 else x / x)
+
+data[["id"] + selected_columns].to_csv(DATA / "food_texts.csv", index=False)
 # %%
