@@ -33,6 +33,7 @@ data = pd.read_csv(PROC / "food_texts.csv", index_col=0)
 
 
 # %%
+## Define functions
 def split_text(text: str, country: str = "uk", max_length: int = 512) -> list:
     """
     Splits the input text into chunks of a specified maximum length.
@@ -52,15 +53,12 @@ def split_text(text: str, country: str = "uk", max_length: int = 512) -> list:
     current_chunk = []
 
     for sent in sentences:
-        # Check if adding the next word would exceed the max_length
         if len(" ".join(current_chunk + [sent])) <= max_length:
             current_chunk.append(sent)
         else:
-            # If it exceeds, save the current chunk and start a new one
             chunks.append(" ".join(current_chunk))
             current_chunk = [sent]
 
-    # Add the last chunk if it has any words
     if current_chunk:
         chunks.append(" ".join(current_chunk))
 
