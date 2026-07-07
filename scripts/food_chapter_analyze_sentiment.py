@@ -10,8 +10,66 @@ import matplotlib.pyplot as plt
 ROOT = Path(__file__).parent.parent
 DATA = ROOT / "data"
 PROC = DATA / "processed"
+PNG = ROOT / "png"
 
 map_sentiment = {"positive": 1, "negative": -1}
+
+COLORS = {"yellow": "#E6B830", "blue": "#A5C9E6", "green": "#73C0C1"}
+
+
+# %%
+## Define functions
+def plot_boxplot(
+    df: pd.DataFrame,
+    tick_labels: list = ["Reflecisve", "Automatic"],
+    left_query: str = "mot_refl",
+    right_query: str = "mot_auto",
+    COLORS: list = [COLORS["yellow"], COLORS["yellow"]],
+):
+    """
+    Plot 3 boxplots in one line.
+
+    Parameters:
+    -----------
+    df (pd.DataFrame): a dataframe in a long format.
+    tick_labels (list): a list of two strings with tick labels.
+    left_query (str): a string denotating the name of the variable for left boxplot.
+    right_query (str): a string denotating the name of the variable for right boxplot.
+    COLORS (list): a list of two strings with colors of the boxplots.
+
+    Returns:
+    plt.Figure: a figure with 3 boxplots in one line.
+    """
+    fig, axs = plt.subplots(figsize=(9, 4), nrows=1, ncols=3)
+
+    for n, t in enumerate(df.groupby("country")):
+        country, tmp = t
+        left = tmp.query("variable == @left_query")["sentiment"].tolist()
+        n_left = f"(n = {len(left)})"
+        right = tmp.query("variable == @right_query")["sentiment"].tolist()
+        n_right = f"(n = {len(right)})"
+        tick_labels_formatted = [
+            item + "\n" + n for item, n in zip(tick_labels, [n_left, n_right])
+        ]
+        bplot = axs[n].boxplot(
+            [left, right],
+            patch_artist=True,
+            tick_labels=tick_labels_formatted,
+            medianprops=dict(linestyle="-", linewidth=1, color="black"),
+            widths=(0.75, 0.75),
+        )
+        for patch, color in zip(bplot["boxes"], COLORS):
+            patch.set_facecolor(color)
+        axs[n].set_ylim(-1.4, 1.4)
+        axs[n].title.set_text(country.upper())
+        for spin in axs[n].spines:
+            if spin != "bottom" and spin != "left" and n == 0:
+                axs[n].spines[spin].set_visible(False)
+            elif n != 0 and spin != "bottom":
+                axs[n].spines[spin].set_visible(False)
+                axs[n].get_yaxis().set_visible(False)
+    return fig
+
 
 # %%
 ## Load data
@@ -32,52 +90,44 @@ df = pd.merge(df, df_sentiment, on="id").melt(
     id_vars=["id", "body", "country", "sentiment"]
 )
 # %%
-poland = df.query("country == 'poland'").reset_index(drop=True)
-poland.query("value > 0").groupby("variable")["sentiment"].mean()
+## MOTIVATION
+df_plot = df.query("variable == 'mot_auto' or variable == 'mot_refl'").query(
+    "value > 0"
+)
 
-lst = [item for item in set(poland["variable"]) if "mot" in item]
-for item in lst:
-    sent = poland.query("value > 0 and variable == @item")["sentiment"].tolist()
-    xbins = np.array([i * 0.1 for i in range(-9, 11, 1)])
-    plt.hist(
-        sent, bins=xbins, label=item, alpha=0.5, density=True, histtype="barstacked"
-    )
-
-plt.legend()
-plt.xlabel("Sentiment")
-plt.ylabel("Density")
-plt.show()
-
+fig = plot_boxplot(df=df_plot)
+fig.tight_layout()
+fig.savefig(PNG / "motivation.png", dpi=200)
 # %%
-portugal = df.query("country == 'portugal'").reset_index(drop=True)
-portugal.query("value > 0").groupby("variable")["sentiment"].mean()
+## CAPABILITIES
+df_plot = df.query(
+    "variable == 'cap_psychological' or variable == 'cap_physical'"
+).query("value > 0")
 
-lst = [item for item in set(portugal["variable"]) if "mot" in item]
-for item in lst:
-    sent = portugal.query("value > 0 and variable == @item")["sentiment"].tolist()
-    xbins = np.array([i * 0.1 for i in range(-9, 11, 1)])
-    plt.hist(
-        sent, bins=xbins, label=item, alpha=0.5, density=True, histtype="barstacked"
-    )
+fig = plot_boxplot(
+    df=df_plot,
+    tick_labels=["Psychological", "Physical"],
+    left_query="cap_psychological",
+    right_query="cap_physical",
+    COLORS=[COLORS["blue"], COLORS["blue"]],
+)
 
-plt.legend()
-plt.xlabel("Sentiment")
-plt.ylabel("Density")
-plt.show()
-
+fig.tight_layout()
+fig.savefig(PNG / "capabilities.png", dpi=200)
 # %%
-uk = df.query("country == 'uk'").reset_index(drop=True)
-uk.query("value > 0").groupby("variable")["sentiment"].mean()
+## OPPORTUNITIES
+df_plot = df.query("variable == 'opp_social' or variable == 'opp_physical'").query(
+    "value > 0"
+)
 
-lst = [item for item in set(uk["variable"]) if "mot" in item]
-for item in lst:
-    sent = uk.query("value > 0 and variable == @item")["sentiment"].tolist()
-    xbins = np.array([i * 0.1 for i in range(-9, 11, 1)])
-    plot = plt.hist(
-        sent, bins=xbins, label=item, alpha=0.5, density=True, histtype="barstacked"
-    )
-plt.legend()
-plt.xlabel("Sentiment")
-plt.ylabel("Density")
-plt.show()
+fig = plot_boxplot(
+    df=df_plot,
+    tick_labels=["Social", "Physical"],
+    left_query="opp_social",
+    right_query="opp_physical",
+    COLORS=[COLORS["green"], COLORS["green"]],
+)
+
+fig.tight_layout()
+fig.savefig(PNG / "opportunities.png", dpi=200)
 # %%
