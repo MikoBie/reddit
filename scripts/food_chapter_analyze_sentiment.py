@@ -97,7 +97,7 @@ df_plot = df.query("variable == 'mot_auto' or variable == 'mot_refl'").query(
 
 fig = plot_boxplot(df=df_plot)
 fig.tight_layout()
-fig.savefig(PNG / "motivation.png", dpi=200)
+fig.savefig(PNG / "motivation_sentiment.png", dpi=200)
 # %%
 ## CAPABILITIES
 df_plot = df.query(
@@ -113,7 +113,7 @@ fig = plot_boxplot(
 )
 
 fig.tight_layout()
-fig.savefig(PNG / "capabilities.png", dpi=200)
+fig.savefig(PNG / "capabilities_sentiment.png", dpi=200)
 # %%
 ## OPPORTUNITIES
 df_plot = df.query("variable == 'opp_social' or variable == 'opp_physical'").query(
@@ -129,5 +129,5 @@ fig = plot_boxplot(
 )
 
 fig.tight_layout()
-fig.savefig(PNG / "opportunities.png", dpi=200)
+fig.savefig(PNG / "opportunities_sentiment.png", dpi=200)
 # %%

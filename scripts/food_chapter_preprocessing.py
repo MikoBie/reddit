@@ -131,6 +131,7 @@ portugal = portugal.assign(
     mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
     opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
     opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
+    mot_auto=0,
     country="portugal",
 ).filter(items=selected_columns)
 
