@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
 from sklearn.decomposition import PCA
+from scipy.spatial.distance import cdist
+from scipy.stats import levene
 
 # %%
 ## Define globals
@@ -85,6 +87,27 @@ def plot_scatter_with_boxplots(
     return fig
 
 
+def levene_test(df: pd.DataFrame, countries: list = ["poland", "uk"]):
+    """Computes levene test of variance
+
+    Parameters
+    ----------
+    df
+        a data frame with columns counry and distances
+    countries, optional
+        a list with name of countries to compare, by default ["poland", "uk"]
+    """
+    dct = {}
+    print("=====Levene Test=====")
+    for country in countries:
+        tmp = df.query("country == @country")["distances"].tolist()
+        dct[country] = tmp
+        print(f"{country} variance = {np.var(tmp)}")
+    stat, pvalue = levene(*dct.values())
+    print(f"Test Value = {stat}")
+    print(f"p-value = {pvalue}")
+
+
 # %%
 ## Load data
 df = pd.read_csv(PROC / "food_texts.csv", index_col=None)
@@ -97,17 +120,22 @@ for line in open(PROC / "food_texts_embeddings.jsonl", "r"):
 df_embeddings = pd.DataFrame.from_dict(embeddings_lst)
 df = pd.merge(df, df_embeddings, on="id")
 # %%
-## Compute PCA on nromalized embeddings
+## Compute PCA on normalized embeddings
 df_lst = []
 for _, tmp in df.groupby("country"):
     vectors = np.array(tmp["embeddings"].tolist())
     matrix = np.vstack(vectors)
-    # Calculate Euclidean distance of embeddings
+    centroid = np.mean(vectors, axis=0, keepdims=True)
+    ## Calculate cosine distance
+    distances_2d = cdist(vectors, centroid, metric="cosine")
+    cosine_distances = distances_2d.flatten()
+    ## Calculate Euclidean distance of embeddings
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
     matrix /= norms
     ## Compute PCA
     pca = PCA(n_components=2, random_state=8710).fit_transform(matrix)
     pca_df = pd.DataFrame(pca, columns=["Component A", "Component B"])
+    pca_df["distances"] = cosine_distances
     tmp = tmp.reset_index(drop=True).join(pca_df)
     df_lst.append(tmp)
 
@@ -121,6 +149,10 @@ fig = plot_scatter_with_boxplots(df=df_mot, color=COLORS["yellow"])
 fig.tight_layout()
 fig.savefig(PNG / "motivation_semantic_spread.png", dpi=200)
 fig
+
+# %%
+## Run the test on these distances
+levene_test(df_mot, countries=["poland", "portugal", "uk"])
 # %%
 ## CAPABILITIES
 df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
@@ -130,6 +162,16 @@ fig.tight_layout()
 fig.savefig(PNG / "capabilities_sematic_spread.png", dpi=200)
 fig
 # %%
+## Run the test on these distances
+levene_test(df_cap, countries=["poland", "uk"])
+# %%
+# Run the test on these distances
+stat, p_value = levene(
+    df_cap.query("country == 'poland'")["distances"],
+    df_cap.query("country == 'uk'")["distances"],
+)
+print(f"Levene's test p-value: {p_value:.4f}")
+# %%
 ## OPPORTUNITIES
 df_opp = df.query("opp_physical > 0 | opp_social > 0")
 
@@ -137,5 +179,8 @@ fig = plot_scatter_with_boxplots(df=df_opp, color=COLORS["green"])
 fig.tight_layout()
 fig.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
 fig
+# %%
+## Run the test on these distances
+levene_test(df_opp, countries=["poland", "uk"])
 
 # %%

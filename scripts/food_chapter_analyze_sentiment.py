@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import median_test
 
 # %%
 ## Define globals
@@ -71,6 +72,36 @@ def plot_boxplot(
     return fig
 
 
+def test_median(
+    df: pd.DataFrame, country_a: str = "poland", country_b: str = "uk"
+) -> None:
+    """Prints results of Mood Median Test
+
+    Parameters
+    ----------
+    df
+        a data frame with "sentiment", "variable", and country columns.
+    country_a, optional
+        name of the first country, by default "poland"
+    country_b, optional
+        name of the second country, by default "uk"
+    """
+    for group_var, tmp in df.groupby("variable"):
+        x = tmp.query("country == @country_a")["sentiment"]
+        y = tmp.query("country == @country_b")["sentiment"]
+        if len(x) < 1 or len(y) < 1:
+            continue
+        results = median_test(x, y)
+        print("======Median Test======")
+        print(f"Category {group_var}")
+        print(f"{country_a} median = {np.median(x)}")
+        print(f"{country_b} median = {np.median(y)}")
+        print(
+            f"Statistics (Chi^2) = {results[0]}, p-value = {results[1]}, median = {results[2]}"
+        )
+        print("=======================")
+
+
 # %%
 ## Load data
 df = pd.read_csv(PROC / "food_texts.csv", index_col=None)
@@ -91,21 +122,27 @@ df = pd.merge(df, df_sentiment, on="id").melt(
 )
 # %%
 ## MOTIVATION
-df_plot = df.query("variable == 'mot_auto' or variable == 'mot_refl'").query(
-    "value > 0"
-)
+df_mot = df.query("variable == 'mot_auto' or variable == 'mot_refl'").query("value > 0")
 
-fig = plot_boxplot(df=df_plot)
+fig = plot_boxplot(df=df_mot)
 fig.tight_layout()
 fig.savefig(PNG / "motivation_sentiment.png", dpi=200)
 # %%
+## Poland vs UK
+test_median(df_mot)
+## Poland vs Portugal
+test_median(df_mot, country_b="portugal")
+## Portugal vs UK
+test_median(df_mot, country_a="portugal")
+
+# %%
 ## CAPABILITIES
-df_plot = df.query(
+df_cap = df.query(
     "variable == 'cap_psychological' or variable == 'cap_physical'"
 ).query("value > 0")
 
 fig = plot_boxplot(
-    df=df_plot,
+    df=df_cap,
     tick_labels=["Psychological", "Physical"],
     left_query="cap_psychological",
     right_query="cap_physical",
@@ -115,13 +152,17 @@ fig = plot_boxplot(
 fig.tight_layout()
 fig.savefig(PNG / "capabilities_sentiment.png", dpi=200)
 # %%
+## Poland vs UK
+test_median(df_cap)
+
+# %%
 ## OPPORTUNITIES
-df_plot = df.query("variable == 'opp_social' or variable == 'opp_physical'").query(
+df_opp = df.query("variable == 'opp_social' or variable == 'opp_physical'").query(
     "value > 0"
 )
 
 fig = plot_boxplot(
-    df=df_plot,
+    df=df_opp,
     tick_labels=["Social", "Physical"],
     left_query="opp_social",
     right_query="opp_physical",
@@ -131,3 +172,5 @@ fig = plot_boxplot(
 fig.tight_layout()
 fig.savefig(PNG / "opportunities_sentiment.png", dpi=200)
 # %%
+## Poland vs UK
+test_median(df_cap)
