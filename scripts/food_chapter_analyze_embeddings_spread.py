@@ -17,6 +17,75 @@ COLORS = {"yellow": "#E6B830", "blue": "#A5C9E6", "green": "#73C0C1"}
 
 
 # %%
+## Define functions
+def plot_scatter_with_boxplots(
+    df: pd.DataFrame, color: str = COLORS["yellow"]
+) -> plt.Figure:
+    """Plots a scatter plot with boxplots that show distribution of the variables.
+
+    Parameters
+    ----------
+    df
+        a data frame with Component A and Component B columns.
+    color, optional
+        color of the plots, by default COLORS["yellow"]
+
+    Returns
+    -------
+        a series of three scatter plots with boxplots.
+    """
+    fig = plt.Figure(figsize=(9, 3))
+    outer = gridspec.GridSpec(nrows=1, ncols=3)
+    for n, t in enumerate(df.groupby("country")):
+        country, tmp = t
+        nrows = len(tmp)
+        inner = gridspec.GridSpecFromSubplotSpec(
+            nrows=6, ncols=6, subplot_spec=outer[n], wspace=0.1, hspace=0.2
+        )
+        ax_main = plt.Subplot(fig, inner[1:6, 0:5])
+        ax_main.plot(tmp["Component A"], tmp["Component B"], ".", color=color)
+        ax_main.set_xlim(-0.6, 0.6)
+        ax_main.set_xlabel("Component A")
+        ax_main.set_ylim(-0.6, 0.6)
+        ax_main.set_ylabel("Component B")
+        ax_main.tick_params("x", top=True, labeltop=False)
+        ax_main.tick_params("y", right=True, labelright=False)
+        fig.add_subplot(ax_main)
+
+        ax = plt.Subplot(fig, inner[0, 0:5], sharex=ax_main)
+        ax.set_xlim(-0.6, 0.6)
+        ax.boxplot(
+            tmp["Component A"],
+            patch_artist=True,
+            medianprops=dict(linestyle="-", linewidth=1, color="black"),
+            widths=0.5,
+            boxprops={"facecolor": color},
+            orientation="horizontal",
+        )
+        for spine in ax.spines:
+            ax.spines[spine].set_visible(False)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax.title.set_text(country.upper() + "\n" + f"(n = {nrows})")
+        fig.add_subplot(ax)
+
+        ax = plt.Subplot(fig, inner[1:6, 5], sharey=ax_main)
+        ax.boxplot(
+            tmp["Component B"],
+            patch_artist=True,
+            medianprops=dict(linestyle="-", linewidth=1, color="black"),
+            widths=0.5,
+            boxprops={"facecolor": color},
+        )
+        for spine in ax.spines:
+            ax.spines[spine].set_visible(False)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        fig.add_subplot(ax)
+    return fig
+
+
+# %%
 ## Load data
 df = pd.read_csv(PROC / "food_texts.csv", index_col=None)
 
@@ -48,167 +117,25 @@ df = pd.concat(df_lst)
 ## MOTIVATION
 df_mot = df.query("mot_refl > 0 | mot_auto > 0")
 
-fig = plt.figure(figsize=(9, 3))
-outer = gridspec.GridSpec(nrows=1, ncols=3)
-for n, t in enumerate(df_mot.groupby("country")):
-    country, tmp = t
-    inner = gridspec.GridSpecFromSubplotSpec(
-        nrows=6, ncols=6, subplot_spec=outer[n], wspace=-0.2, hspace=-0.3
-    )
-    for i in range(6):
-        ax_main = plt.Subplot(fig, inner[0:4, 2:6])
-        ax_main.plot(
-            tmp["Component A"], tmp["Component B"], ".", color=COLORS["yellow"]
-        )
-        ax_main.set_xlim(-0.6, 0.6)
-        ax_main.set_ylim(-0.6, 0.6)
-        for spine in ax_main.spines:
-            if spine not in ["left", "bottom"]:
-                ax_main.spines[spine].set_visible(False)
-        fig.add_subplot(ax_main)
-        ax_main.title.set_text(country.upper())
-
-        ax = plt.Subplot(fig, inner[5, 2:6], sharex=ax_main)
-        ax.set_xlim(-0.6, 0.6)
-        ax.boxplot(
-            tmp["Component A"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["yellow"]},
-            orientation="horizontal",
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-        ax = plt.Subplot(fig, inner[0:4, 0], sharey=ax_main)
-        ax.boxplot(
-            tmp["Component B"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["yellow"]},
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-plt.tight_layout()
-plt.show()
+fig = plot_scatter_with_boxplots(df=df_mot, color=COLORS["yellow"])
+fig.tight_layout()
 fig.savefig(PNG / "motivation_semantic_spread.png", dpi=200)
+fig
 # %%
 ## CAPABILITIES
 df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
 
-fig = plt.figure(figsize=(9, 3))
-outer = gridspec.GridSpec(nrows=1, ncols=3)
-for n, t in enumerate(df_cap.groupby("country")):
-    country, tmp = t
-    inner = gridspec.GridSpecFromSubplotSpec(
-        nrows=6, ncols=6, subplot_spec=outer[n], wspace=-0.2, hspace=-0.3
-    )
-    for i in range(6):
-        ax_main = plt.Subplot(fig, inner[0:4, 2:6])
-        ax_main.plot(tmp["Component A"], tmp["Component B"], ".", color=COLORS["blue"])
-        ax_main.set_xlim(-0.6, 0.6)
-        ax_main.set_ylim(-0.6, 0.6)
-        for spine in ax_main.spines:
-            if spine not in ["left", "bottom"]:
-                ax_main.spines[spine].set_visible(False)
-        fig.add_subplot(ax_main)
-        ax_main.title.set_text(country.upper())
-
-        ax = plt.Subplot(fig, inner[5, 2:6], sharex=ax_main)
-        ax.set_xlim(-0.6, 0.6)
-        ax.boxplot(
-            tmp["Component A"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["blue"]},
-            orientation="horizontal",
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-        ax = plt.Subplot(fig, inner[0:4, 0], sharey=ax_main)
-        ax.boxplot(
-            tmp["Component B"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["blue"]},
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-plt.tight_layout()
-plt.show()
+fig = plot_scatter_with_boxplots(df=df_cap, color=COLORS["blue"])
+fig.tight_layout()
 fig.savefig(PNG / "capabilities_sematic_spread.png", dpi=200)
+fig
 # %%
 ## OPPORTUNITIES
 df_opp = df.query("opp_physical > 0 | opp_social > 0")
 
-fig = plt.figure(figsize=(9, 3))
-outer = gridspec.GridSpec(nrows=1, ncols=3)
-for n, t in enumerate(df_opp.groupby("country")):
-    country, tmp = t
-    inner = gridspec.GridSpecFromSubplotSpec(
-        nrows=6, ncols=6, subplot_spec=outer[n], wspace=-0.2, hspace=-0.3
-    )
-    for i in range(6):
-        ax_main = plt.Subplot(fig, inner[0:4, 2:6])
-        ax_main.plot(tmp["Component A"], tmp["Component B"], ".", color=COLORS["green"])
-        ax_main.set_xlim(-0.6, 0.6)
-        ax_main.set_ylim(-0.6, 0.6)
-        for spine in ax_main.spines:
-            if spine not in ["left", "bottom"]:
-                ax_main.spines[spine].set_visible(False)
-        fig.add_subplot(ax_main)
-        ax_main.title.set_text(country.upper())
-
-        ax = plt.Subplot(fig, inner[5, 2:6], sharex=ax_main)
-        ax.set_xlim(-0.6, 0.6)
-        ax.boxplot(
-            tmp["Component A"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["green"]},
-            orientation="horizontal",
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-        ax = plt.Subplot(fig, inner[0:4, 0], sharey=ax_main)
-        ax.boxplot(
-            tmp["Component B"],
-            patch_artist=True,
-            medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=0.5,
-            boxprops={"facecolor": COLORS["green"]},
-        )
-        for spine in ax.spines:
-            ax.spines[spine].set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        fig.add_subplot(ax)
-
-plt.tight_layout()
-plt.show()
+fig = plot_scatter_with_boxplots(df=df_opp, color=COLORS["green"])
+fig.tight_layout()
 fig.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
+fig
+
 # %%
