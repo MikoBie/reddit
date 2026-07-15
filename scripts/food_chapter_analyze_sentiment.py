@@ -174,3 +174,5 @@ fig.savefig(PNG / "opportunities_sentiment.png", dpi=200)
 # %%
 ## Poland vs UK
 test_median(df_cap)
+
+# %%
