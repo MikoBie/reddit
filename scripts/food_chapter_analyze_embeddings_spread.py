@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.stats import levene
@@ -14,6 +15,9 @@ DATA = ROOT / "data"
 PROC = DATA / "processed"
 PNG = ROOT / "png"
 COLORS = {"yellow": "#E6B830", "blue": "#A5C9E6", "green": "#73C0C1"}
+font = {"size": 10}
+
+rc("font", **font)
 
 
 # %%
@@ -33,7 +37,8 @@ def levene_test(df: pd.DataFrame, countries: list = ["poland", "uk"]):
     for country in countries:
         tmp = df.query("country == @country")["distances"].tolist()
         dct[country] = tmp
-        print(f"{country} variance = {np.var(tmp)}")
+        print(f"{country} standard deviation = {np.std(tmp)}")
+        print(f"{country} median = {np.median(tmp)}")
     stat, pvalue = levene(*dct.values())
     print(f"Test Value = {stat}")
     print(f"p-value = {pvalue}")
@@ -62,7 +67,7 @@ def plot_boxplot(
     -------
         Boxplots for countries.
     """
-    fig = plt.Figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(4, 4))
     ax = plt.subplot(111)
     for n, t in enumerate(df.groupby("country")):
         country, tmp = t
@@ -82,8 +87,9 @@ def plot_boxplot(
 
     if sig:
         ax.plot([0, 2], [0.4, 0.4], linestyle=":", color="black")
-        ax.text(1, 0.42, sig_level, horizontalalignment="center")
+        ax.text(1, 0.42, sig_level, horizontalalignment="center", fontsize=12)
     ax.set_ylim(0, 0.5)
+    ax.set_ylabel("Semantic spread\n(cosine similarity)")
     return fig
 
 
@@ -118,9 +124,8 @@ df = pd.concat(df_lst)
 df_mot = df.query("mot_refl > 0 | mot_auto > 0")
 
 fig = plot_boxplot(df=df_mot, color=COLORS["yellow"])
-fig.tight_layout()
-fig.savefig(PNG / "motivation_semantic_spread.png", dpi=200)
-fig
+plt.tight_layout()
+plt.savefig(PNG / "motivation_semantic_spread.png", dpi=200)
 
 # %%
 ## Run the test on these distances
@@ -130,9 +135,8 @@ levene_test(df_mot, countries=["poland", "portugal", "uk"])
 df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
 
 fig = plot_boxplot(df=df_cap, color=COLORS["blue"], sig=True, sig_level="*")
-fig.tight_layout()
-fig.savefig(PNG / "capabilities_sematic_spread.png", dpi=200)
-fig
+plt.tight_layout()
+plt.savefig(PNG / "capabilities_semantic_spread.png", dpi=200)
 # %%
 ## Run the test on these distances
 levene_test(df_cap, countries=["poland", "uk"])
@@ -141,9 +145,10 @@ levene_test(df_cap, countries=["poland", "uk"])
 df_opp = df.query("opp_physical > 0 | opp_social > 0")
 
 fig = plot_boxplot(df=df_opp, color=COLORS["green"], sig=True, sig_level="**")
-fig.tight_layout()
-fig.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
-fig
+plt.tight_layout()
+plt.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
 # %%
 ## Run the test on these distances
 levene_test(df_opp, countries=["poland", "uk"])
+
+# %%
