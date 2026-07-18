@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 from scipy.stats import median_test
 
 # %%
@@ -16,13 +17,16 @@ PNG = ROOT / "png"
 map_sentiment = {"positive": 1, "negative": -1}
 
 COLORS = {"yellow": "#E6B830", "blue": "#A5C9E6", "green": "#73C0C1"}
+font = {"size": 10}
+
+rc("font", **font)
 
 
 # %%
 ## Define functions
 def plot_boxplot(
     df: pd.DataFrame,
-    tick_labels: list = ["Reflecisve", "Automatic"],
+    tick_labels: list = ["Reflective", "Automatic"],
     left_query: str = "mot_refl",
     right_query: str = "mot_auto",
     COLORS: list = [COLORS["yellow"], COLORS["yellow"]],
@@ -66,6 +70,7 @@ def plot_boxplot(
         for spin in axs[n].spines:
             if spin != "bottom" and spin != "left" and n == 0:
                 axs[n].spines[spin].set_visible(False)
+                axs[n].set_ylabel("Sentiment")
             elif n != 0 and spin != "bottom":
                 axs[n].spines[spin].set_visible(False)
                 axs[n].get_yaxis().set_visible(False)
@@ -173,6 +178,6 @@ fig.tight_layout()
 fig.savefig(PNG / "opportunities_sentiment.png", dpi=200)
 # %%
 ## Poland vs UK
-test_median(df_cap)
+test_median(df_opp)
 
 # %%
