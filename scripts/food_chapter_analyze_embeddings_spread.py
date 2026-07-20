@@ -18,6 +18,7 @@ COLORS = {"yellow": "#E6B830", "blue": "#A5C9E6", "green": "#73C0C1"}
 font = {"size": 10}
 
 rc("font", **font)
+rng = np.random.default_rng(8710)
 
 
 # %%
@@ -39,7 +40,7 @@ def levene_test(df: pd.DataFrame, countries: list = ["poland", "uk"]):
         dct[country] = tmp
         print(f"{country} standard deviation = {np.std(tmp)}")
         print(f"{country} median = {np.median(tmp)}")
-    stat, pvalue = levene(*dct.values())
+    stat, pvalue = levene(*dct.values(), center="trimmed")
     print(f"Test Value = {stat}")
     print(f"p-value = {pvalue}")
 
@@ -93,6 +94,62 @@ def plot_boxplot(
     return fig
 
 
+def permutation_test_pairwise(
+    df: pd.DataFrame,
+    label_a: str,
+    label_b: str,
+    num_permutations=10000,
+    alpha_adj=0.0167,
+):
+    """
+    Runs a non-parametric permutation test to compare the means of two distance groups.
+
+    Parameters:
+    -----------
+    df
+        a data frame with country and distances columns.
+    label_a
+        a name of a country
+    label_b
+        a name of a country
+    num_permutations, optional
+        number of permutations, by default 10000
+    alpha_adj, optional
+        adjustment of the p value, by default 0.0167
+    """
+    group_a = df.query("country == @label_a")["distances"].tolist()
+    group_b = df.query("country == @label_b")["distances"].tolist()
+    dev_a = np.abs(group_a - np.median(group_a))
+    dev_b = np.abs(group_b - np.median(group_b))
+    observed_diff = np.abs(np.mean(dev_a) - np.mean(dev_b))
+
+    # Combine the data
+    combined = np.concatenate([group_a, group_b])
+    n_a = len(group_a)
+
+    extreme_count = 0
+    for _ in range(num_permutations):
+        # Shuffle the labels
+        shuffled = rng.permutation(combined)
+        # Split into fake groups
+        fake_a = shuffled[:n_a]
+        fake_b = shuffled[n_a:]
+        dev_fake_a = np.abs(fake_a - np.median(fake_a))
+        dev_fake_b = np.abs(fake_b - np.median(fake_b))
+
+        fake_diff = np.abs(np.mean(dev_fake_a) - np.mean(dev_fake_b))
+        if fake_diff >= observed_diff:
+            extreme_count += 1
+
+    # p-value is the proportion of shuffles that produced a difference as large or larger
+    p_val = extreme_count / num_permutations
+    status = "SIGNIFICANT" if p_val < alpha_adj else "NOT SIGNIFICANT"
+
+    print(f"{label_a} vs {label_b} (Permutation):")
+    print(f"  Observed Mean Diff: {observed_diff}")
+    print(f"  p-value:            {p_val} ({status})")
+
+
 # %%
 ## Load data
 df = pd.read_csv(PROC / "food_texts.csv", index_col=None)
@@ -134,7 +191,7 @@ levene_test(df_mot, countries=["poland", "portugal", "uk"])
 ## CAPABILITIES
 df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
 
-fig = plot_boxplot(df=df_cap, color=COLORS["blue"], sig=True, sig_level="*")
+fig = plot_boxplot(df=df_cap, color=COLORS["blue"], sig=False, sig_level="*")
 plt.tight_layout()
 plt.savefig(PNG / "capabilities_semantic_spread.png", dpi=200)
 # %%
@@ -151,4 +208,9 @@ plt.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
 ## Run the test on these distances
 levene_test(df_opp, countries=["poland", "portugal", "uk"])
 
+# %%
+## Premutation test
+permutation_test_pairwise(df_opp, label_a="poland", label_b="uk")
+permutation_test_pairwise(df_opp, label_a="poland", label_b="portugal")
+permutation_test_pairwise(df_opp, label_a="portugal", label_b="uk")
 # %%
