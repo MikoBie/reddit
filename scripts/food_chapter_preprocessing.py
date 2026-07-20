@@ -26,7 +26,7 @@ column_poland = {
     "Unnamed: 13": "mot_auto",
 }
 
-column_uk = {
+column_comment = {
     "Comment": "body",
 }
 
@@ -59,64 +59,50 @@ poland[columns_to_map] = (
 
 # %%
 ## PORTUGAL
-portugal = pd.read_excel(XLSX / "Reddit_Portugal.xlsx", index_col=0)
+portugal = pd.read_excel(XLSX / "Reddit_Portugal_COMB.xlsx", index_col=0).rename(
+    columns=column_comment
+)
 
-columns_to_map = portugal.loc[
-    :, "En_Motiv_Refle_Moral (animals)":"Bar_Oppor_accesability"
-].columns.tolist()
+columns_to_map = portugal.loc[:, "Health":"Responsibility"].columns.tolist()
 
 portugal[columns_to_map] = (
     portugal.loc[:, columns_to_map].map(lambda x: 1 if not pd.isna(x) else 0).fillna(0)
 )
 portugal = portugal.assign(
-    cap_psychological=lambda x: x["Bar_Cap_knowledge about vege cuisine"],
-    cap_physical=lambda x: x["En_Capab_Phys_Economic"] + x["Bar_cap_Phys_health"],
-    opp_accessability=lambda x: x["Bar_Oppor_accesability"],
-    opp_affordability=lambda x: x["Bar_Oport_Phys_economic"],
-    opp_social_influence=lambda x: x["En_Opport_Social_Circle"],
-    opp_tradition=lambda x: x["Bar_Opport_Social_family traditions"],
-    mot_refl_moral=lambda x: x["En_Motiv_Refle_Moral (animals)"],
-    mot_refl_environmental=lambda x: x["En_Motiv_Refle_Environment"],
-    mot_refl_health_wellbeing=lambda x: x["En_Motiv_Refle_Health"]
-    + x["En_Motiv_Refle_well-being"]
-    + x["Bar_Mot_Ref_health"],
-    mot_refl_disonance=lambda x: x["En_Motiv_Ref_Reduction of cognitive disonance"],
+    cap_psychological=lambda x: x["Knowledge"],
+    cap_physical=lambda x: x["Health"],
+    opp_physical=lambda x: x["Accessibility"] + x["Affordability"],
+    opp_social=lambda x: x["Social Environment"] + x["Traditions"],
+    mot_refl=lambda x: x["Moral"]
+    + x["Environment"]
+    + x["Health.1"]
+    + x["Responsibility"],
+    mot_auto=lambda x: x["Personal Preference"],
 ).filter(regex=r"body|^cap_|^opp_|^mot_")
 
 # %%
 ## UK
-uk = pd.read_excel(XLSX / "Reddit_UK.xlsx", index_col=0).rename(columns=column_uk)
+uk = pd.read_excel(XLSX / "Reddit_UK_COMB.xlsx", index_col=0).rename(
+    columns=column_comment
+)
 
-columns_to_map = uk.loc[
-    :, "Cap_Physical_Bar_Lack of Time":"Mot_Aut_Bar_Personal Preference"
-].columns.tolist()
+columns_to_map = uk.loc[:, "Health":"Personal Preference"].columns.tolist()
 
 uk[columns_to_map] = (
-    uk.loc[:, "Cap_Physical_Bar_Lack of Time":"Mot_Aut_Bar_Personal Preference"]
+    uk.loc[:, "Health":"Personal Preference"]
     .map(lambda x: 1 if not pd.isna(x) else 0)
     .fillna(0)
 )
 uk = uk.assign(
-    cap_psychological=lambda x: x["Cap_Psych_Bar_Knowledge"]
-    + x["Cap_Psych_Bar_Cooking Skills"],
-    cap_physical=lambda x: x["Cap_Physical_Bar_Lack of Time"]
-    + x["Cap_Physical_Ena_Health"]
-    + x["Cap_Physical_Bar_Health"],
-    opp_affordability=lambda x: x["Opp_Physical_Ena_Affordability"]
-    + x["Opp_Physical_Bar_Affordability"],
-    opp_accessability=lambda x: x["Opp_Physical_Ena_Accessibility"],
-    opp_social_influence=lambda x: x["Opp_Soc_Ena_Social Circle"]
-    + x["Opp_Soc_Bar_Social Circle"],
-    opp_tradition=lambda x: x["Opp_Soc_Ena_Family Traditions"]
-    + x["Opp_Soc_Bar_Family Traditions"],
-    mot_refl_moral=lambda x: x["Mot_Ref_Ena_Moral"],
-    mot_refl_environmental=lambda x: x["Mot_Ref_Ena_Environment"],
-    mot_refl_health_wellbeing=lambda x: x["Mot_Ref_Ena_Health"]
-    + x["Mot_Ref_Ena_Well Being"]
-    + x["Mot_Ref_Bar_Health"],
-    mot_refl_disonance=lambda x: x["Mot_Ref_Ena_Decrease of cognitive dissonance"],
-    mot_auto=lambda x: x["Mot_Aut_Ena_Personal Preference"]
-    + x["Mot_Aut_Bar_Personal Preference"],
+    cap_psychological=lambda x: x["Cap_Psych_Bar_Knowledge"],
+    cap_physical=lambda x: x["Health"],
+    opp_physical=lambda x: x["Accessibility"] + x["Opp_Physical_Bar_Affordability"],
+    opp_social=lambda x: x["Traditions"] + x["Social Circle"],
+    mot_refl=lambda x: x["Mot_Ref_Ena_Moral"]
+    + x["Mot_Ref_Ena_Environment"]
+    + x["Responsability"]
+    + x["Health.1"],
+    mot_auto=lambda x: x["Personal Preference"],
 ).filter(regex=r"body|^cap_|^opp_|^mot_")
 
 # %%
@@ -128,17 +114,10 @@ poland = poland.assign(
     country="poland",
 ).filter(items=selected_columns)
 portugal = portugal.assign(
-    mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
-    opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
-    opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
-    mot_auto=0,
     country="portugal",
 ).filter(items=selected_columns)
 
 uk = uk.assign(
-    mot_refl=lambda x: x.filter(regex=r"^mot_refl_").sum(axis=1),
-    opp_physical=lambda x: x["opp_accessability"] + x["opp_affordability"],
-    opp_social=lambda x: x["opp_social_influence"] + x["opp_tradition"],
     country="uk",
 ).filter(items=selected_columns)
 

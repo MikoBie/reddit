@@ -103,7 +103,7 @@ for line in open(PROC / "food_texts_embeddings.jsonl", "r"):
     embeddings_lst.append({"id": tmp["id"], "embeddings": tmp["embeddings"]})
 
 df_embeddings = pd.DataFrame.from_dict(embeddings_lst)
-df = pd.merge(df, df_embeddings, on="id")
+df = pd.merge(df, df_embeddings, on="id").drop_duplicates("id")
 # %%
 ## Compute PCA on normalized embeddings
 df_lst = []
@@ -149,6 +149,6 @@ plt.tight_layout()
 plt.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
 # %%
 ## Run the test on these distances
-levene_test(df_opp, countries=["poland", "uk"])
+levene_test(df_opp, countries=["poland", "portugal", "uk"])
 
 # %%

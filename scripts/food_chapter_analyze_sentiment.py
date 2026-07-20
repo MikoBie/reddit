@@ -122,8 +122,10 @@ for line in open(PROC / "food_texts_sentiment.jsonl", "r"):
     sentiment_lst.append({"id": tmp["id"], "sentiment": sentiment})
 
 df_sentiment = pd.DataFrame.from_dict(sentiment_lst)
-df = pd.merge(df, df_sentiment, on="id").melt(
-    id_vars=["id", "body", "country", "sentiment"]
+df = (
+    pd.merge(df, df_sentiment, on="id")
+    .drop_duplicates("id")
+    .melt(id_vars=["id", "body", "country", "sentiment"])
 )
 # %%
 ## MOTIVATION
