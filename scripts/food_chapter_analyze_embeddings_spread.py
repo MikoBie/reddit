@@ -48,6 +48,7 @@ def levene_test(df: pd.DataFrame, countries: list = ["poland", "uk"]):
 def plot_boxplot(
     df: pd.DataFrame,
     color: str = COLORS["yellow"],
+    title: str = "",
     sig: bool = False,
     sig_level: str = "*",
 ) -> plt.Figure:
@@ -89,6 +90,7 @@ def plot_boxplot(
     if sig:
         ax.plot([0, 2], [0.4, 0.4], linestyle=":", color="black")
         ax.text(1, 0.42, sig_level, horizontalalignment="center", fontsize=12)
+    ax.title.set_text(title)
     ax.set_ylim(0, 0.5)
     ax.set_ylabel("Semantic spread\n(cosine similarity)")
     return fig
@@ -180,7 +182,7 @@ df = pd.concat(df_lst)
 ## MOTIVATION
 df_mot = df.query("mot_refl > 0 | mot_auto > 0")
 
-fig = plot_boxplot(df=df_mot, color=COLORS["yellow"])
+fig = plot_boxplot(df=df_mot, color=COLORS["yellow"], title="Motivations")
 plt.tight_layout()
 plt.savefig(PNG / "motivation_semantic_spread.png", dpi=200)
 
@@ -191,7 +193,9 @@ levene_test(df_mot, countries=["poland", "portugal", "uk"])
 ## CAPABILITIES
 df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
 
-fig = plot_boxplot(df=df_cap, color=COLORS["blue"], sig=False, sig_level="*")
+fig = plot_boxplot(
+    df=df_cap, color=COLORS["blue"], sig=False, sig_level="*", title="Capabilities"
+)
 plt.tight_layout()
 plt.savefig(PNG / "capabilities_semantic_spread.png", dpi=200)
 # %%
@@ -201,7 +205,9 @@ levene_test(df_cap, countries=["poland", "uk"])
 ## OPPORTUNITIES
 df_opp = df.query("opp_physical > 0 | opp_social > 0")
 
-fig = plot_boxplot(df=df_opp, color=COLORS["green"], sig=True, sig_level="**")
+fig = plot_boxplot(
+    df=df_opp, color=COLORS["green"], sig=True, sig_level="**", title="Opportunities"
+)
 plt.tight_layout()
 plt.savefig(PNG / "opportunities_semantic_spread.png", dpi=200)
 # %%

@@ -27,54 +27,50 @@ rng = np.random.default_rng(8710)
 ## Define functions
 def plot_boxplot(
     df: pd.DataFrame,
-    tick_labels: list = ["Reflective", "Automatic"],
-    left_query: str = "mot_refl",
-    right_query: str = "mot_auto",
-    COLORS: list = [COLORS["yellow"], COLORS["yellow"]],
-):
+    color: str = COLORS["yellow"],
+    title: str = "Motivations",
+    sig: bool = False,
+    sig_level: list = ["***", "***"],
+) -> plt.Figure:
     """
-    Plot 3 boxplots in one line.
+    Plots boxplots for countries. Optionally, it may show a significance level.
 
     Parameters:
     -----------
     df (pd.DataFrame): a dataframe in a long format.
-    tick_labels (list): a list of two strings with tick labels.
-    left_query (str): a string denotating the name of the variable for left boxplot.
-    right_query (str): a string denotating the name of the variable for right boxplot.
-    COLORS (list): a list of two strings with colors of the boxplots.
+    color (str): a list of two strings with colors of the boxplots.
+    title (str): the title of the graph.
 
     Returns:
     plt.Figure: a figure with 3 boxplots in one line.
     """
-    fig, axs = plt.subplots(figsize=(9, 4), nrows=1, ncols=3)
+    fig = plt.figure(figsize=(4, 4))
+    ax = plt.subplot(111)
 
     for n, t in enumerate(df.groupby("country")):
         country, tmp = t
-        left = tmp.query("variable == @left_query")["sentiment"].tolist()
-        n_left = f"(n = {len(left)})"
-        right = tmp.query("variable == @right_query")["sentiment"].tolist()
-        n_right = f"(n = {len(right)})"
-        tick_labels_formatted = [
-            item + "\n" + n for item, n in zip(tick_labels, [n_left, n_right])
-        ]
-        bplot = axs[n].boxplot(
-            [left, right],
+        ax.boxplot(
+            x=tmp["sentiment"],
             patch_artist=True,
-            tick_labels=tick_labels_formatted,
             medianprops=dict(linestyle="-", linewidth=1, color="black"),
-            widths=(0.75, 0.75),
+            widths=0.5,
+            boxprops={"facecolor": color},
+            positions=[n],
+            tick_labels=[country.upper() + "\n" + f"(n = {len(tmp)})"],
         )
-        for patch, color in zip(bplot["boxes"], COLORS):
-            patch.set_facecolor(color)
-        axs[n].set_ylim(-1.4, 1.4)
-        axs[n].title.set_text(country.upper())
-        for spin in axs[n].spines:
-            if spin != "bottom" and spin != "left" and n == 0:
-                axs[n].spines[spin].set_visible(False)
-                axs[n].set_ylabel("Sentiment")
-            elif n != 0 and spin != "bottom":
-                axs[n].spines[spin].set_visible(False)
-                axs[n].get_yaxis().set_visible(False)
+
+    ax.set_ylim(-1.4, 1.4)
+    ax.title.set_text(title)
+    ax.set_ylabel("Sentiment")
+    for spin in ax.spines:
+        if spin != "bottom" and spin != "left":
+            ax.spines[spin].set_visible(False)
+
+    if sig:
+        ax.plot([0, 1], [1.1, 1.1], linestyle=":", color="black")
+        ax.text(0.5, 1.12, sig_level[0], horizontalalignment="center", fontsize=12)
+        ax.plot([1, 2], [1.2, 1.2], linestyle=":", color="black")
+        ax.text(1.5, 1.22, sig_level[1], horizontalalignment="center", fontsize=12)
     return fig
 
 
@@ -169,89 +165,51 @@ for line in open(PROC / "food_texts_sentiment.jsonl", "r"):
     sentiment_lst.append({"id": tmp["id"], "sentiment": sentiment})
 
 df_sentiment = pd.DataFrame.from_dict(sentiment_lst)
-df = (
-    pd.merge(df, df_sentiment, on="id")
-    .drop_duplicates("id")
-    .melt(id_vars=["id", "body", "country", "sentiment"])
-)
+df = pd.merge(df, df_sentiment, on="id").drop_duplicates("id")
 # %%
 ## MOTIVATION
-df_mot = df.query("variable == 'mot_auto' or variable == 'mot_refl'").query("value > 0")
+df_mot = df.query("mot_refl > 0 | mot_auto > 0")
 
-fig = plot_boxplot(df=df_mot)
+fig = plot_boxplot(df=df_mot, sig=True)
 fig.tight_layout()
 fig.savefig(PNG / "motivation_sentiment.png", dpi=200)
 # %%
-## Omnibus test Automatic Motivation
-test_median(df_mot.query("variable == 'mot_auto'"))
-run_pairwise_median_permutation(
-    df=df_mot.query("variable == 'mot_auto'"), label_a="poland", label_b="uk"
-)
-
-# %%
-## Omnibus test Reflective Motivation
-test_median(df_mot.query("variable == 'mot_refl'"))
-run_pairwise_median_permutation(
-    df=df_mot.query("variable == 'mot_refl'"), label_a="poland", label_b="portugal"
-)
-run_pairwise_median_permutation(
-    df=df_mot.query("variable == 'mot_refl'"), label_a="poland", label_b="uk"
-)
-run_pairwise_median_permutation(
-    df=df_mot.query("variable == 'mot_refl'"), label_a="portugal", label_b="uk"
-)
-
+## Omnibus test Motivation
+test_median(df_mot)
+run_pairwise_median_permutation(df=df_mot, label_a="poland", label_b="uk")
+run_pairwise_median_permutation(df=df_mot, label_a="poland", label_b="portugal")
+run_pairwise_median_permutation(df=df_mot, label_a="uk", label_b="portugal")
 
 # %%
 ## CAPABILITIES
-df_cap = df.query(
-    "variable == 'cap_psychological' or variable == 'cap_physical'"
-).query("value > 0")
+df_cap = df.query("cap_psychological > 0 | cap_physical > 0")
 
-fig = plot_boxplot(
-    df=df_cap,
-    tick_labels=["Psychological", "Physical"],
-    left_query="cap_psychological",
-    right_query="cap_physical",
-    COLORS=[COLORS["blue"], COLORS["blue"]],
-)
+fig = plot_boxplot(df=df_cap, color=COLORS["blue"], title="Capabilities")
 
 fig.tight_layout()
 fig.savefig(PNG / "capabilities_sentiment.png", dpi=200)
 # %%
 ## Omnibus test for Psychological Capabilities
-test_median(df_cap.query("variable == 'cap_psychological'"))
+test_median(df_cap)
 
 # %%
 ## OPPORTUNITIES
-df_opp = df.query("variable == 'opp_social' or variable == 'opp_physical'").query(
-    "value > 0"
-)
+df_opp = df.query("opp_physical > 0 | opp_social > 0")
 
 fig = plot_boxplot(
     df=df_opp,
-    tick_labels=["Social", "Physical"],
-    left_query="opp_social",
-    right_query="opp_physical",
-    COLORS=[COLORS["green"], COLORS["green"]],
+    color=COLORS["green"],
+    title="Opportunities",
+    sig=True,
+    sig_level=["**", "*"],
 )
 
 fig.tight_layout()
 fig.savefig(PNG / "opportunities_sentiment.png", dpi=200)
 # %%
 ## Omnibus test for Social Opportunities
-test_median(df_opp.query("variable == 'opp_social'"))
-run_pairwise_median_permutation(
-    df=df_opp.query("variable == 'opp_social'"), label_a="poland", label_b="portugal"
-)
-run_pairwise_median_permutation(
-    df=df_opp.query("variable == 'opp_social'"), label_a="poland", label_b="uk"
-)
-run_pairwise_median_permutation(
-    df=df_opp.query("variable == 'opp_social'"), label_a="portugal", label_b="uk"
-)
-
-# %%
-## Omnibus test for Physical Opportunities
-test_median(df_opp.query("variable == 'opp_physical'"))
+test_median(df_opp)
+run_pairwise_median_permutation(df=df_opp, label_a="poland", label_b="uk")
+run_pairwise_median_permutation(df=df_opp, label_a="poland", label_b="portugal")
+run_pairwise_median_permutation(df=df_opp, label_a="uk", label_b="portugal")
 # %%
