@@ -102,7 +102,7 @@ def permutation_test_pairwise(
     alpha_adj=0.0167,
 ):
     """
-    Runs a non-parametric permutation test to compare the means of two distance groups.
+    Runs a non-parametric permutation test to compare the variances of two distance groups.
 
     Parameters:
     -----------
